@@ -1,23 +1,37 @@
-import React, { useState } from 'react'; // Import useState
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import RainEffect from '../scene/RainEffect';
 import CandlelightEffect from '../scene/CandlelightEffect';
 import LightningEffect from '../scene/LightningEffect';
-// 1. Import Component mới
 import WorryDrawerModal from '../ui/WorryDrawerModal';
+import CommunityDrawer from '../ui/CommunityDrawer';
 
 const Layout = ({ bgImage, isRaining = false, enableCandle = true, isLightsOn = true, children }) => {
-  // 2. State quản lý việc mở Hộc tủ
+  // 1. State quản lý các Drawer
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isCommunityOpen, setIsCommunityOpen] = useState(false);
+
+  // 2. Kỹ thuật "tiêm" props xuống children
+  // Giúp các component con (như ControlBar) nhận được hàm mở Community mà không cần sửa App.jsx
+  const childrenWithProps = React.Children.map(children, child => {
+    // Chỉ thêm props cho các React Component (loại bỏ thẻ HTML thường như div, span để tránh lỗi)
+    if (React.isValidElement(child) && typeof child.type !== 'string') {
+      return React.cloneElement(child, {
+        onOpenCommunity: () => setIsCommunityOpen(true)
+      });
+    }
+    return child;
+  });
 
   return (
     <main className="relative w-full h-screen overflow-hidden bg-slate-900">
       
-      {/* LAYER 0-6: Background & Effects (Giữ nguyên) */}
+      {/* LAYER 0-6: Background & Effects */}
       <AnimatePresence mode='popLayout'>
         <motion.img
           key={bgImage} src={bgImage} alt="Bg"
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          loading="eager"  // <--- THÊM DÒNG NÀY (Bắt buộc tải ngay)
+  fetchPriority="high" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
           transition={{ duration: 1.5 }}
           className="absolute inset-0 w-full h-full object-cover z-0"
         />
@@ -39,37 +53,34 @@ const Layout = ({ bgImage, isRaining = false, enableCandle = true, isLightsOn = 
         className="absolute inset-0 bg-blue-950 mix-blend-multiply z-[15] pointer-events-none"
       />
 
-
-      {/* --- TÍNH NĂNG MỚI: VÙNG KÍCH HOẠT HỘC TỦ (TRIGGER ZONE) --- */}
-      {/* Đây là cái nút tàng hình. 
-          Bạn cần điều chỉnh vị trí (bottom/left/right/top) và kích thước (w/h)
-          cho khớp với hình ảnh cái ngăn kéo hoặc cuốn sổ trong ảnh nền của bạn.
-      */}
+      {/* TRIGGER ZONE: Hộc tủ nỗi buồn */}
       <button
         onClick={() => setIsDrawerOpen(true)}
         className="absolute z-[25] cursor-pointer 
-                   bottom-[15%] left-[25%] w-32 h-20 
-                   /* Bỏ comment dòng dưới để thấy vùng click khi đang căn chỉnh vị trí */
-                   /* border-2 border-red-500 bg-red-500/20 */
-                   outline-none"
+                   bottom-[15%] left-[25%] w-32 h-20 outline-none"
         aria-label="Open Worry Drawer"
         title="Mở hộc tủ nỗi buồn"
       />
 
-
-      {/* --- LAYER 20: UI CONTROLS (Giữ nguyên) --- */}
+      {/* LAYER 20: UI CONTROLS */}
       <motion.div 
         animate={{ opacity: isLightsOn ? 1 : 0.3 }}
         transition={{ duration: 0.5 }}
         className="relative z-20 w-full h-full"
       >
-        {children}
+        {/* Render children đã được tiêm props */}
+        {childrenWithProps}
       </motion.div>
 
-      {/* --- MODAL COMPONENT (Nằm trên cùng) --- */}
+      {/* --- MODALS --- */}
       <WorryDrawerModal 
         isOpen={isDrawerOpen} 
         onClose={() => setIsDrawerOpen(false)} 
+      />
+
+      <CommunityDrawer 
+        isOpen={isCommunityOpen} 
+        onClose={() => setIsCommunityOpen(false)} 
       />
 
     </main>

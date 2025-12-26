@@ -1,71 +1,99 @@
 import React from 'react';
-import { Play, Pause, CloudRain, Image as ImageIcon, Lightbulb } from 'lucide-react'; // 1. Import Lightbulb
+import { Play, Pause, CloudRain, Image as ImageIcon, Lightbulb, LightbulbOff, MessageCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const ControlBar = ({ 
-  isPlaying = false, 
+  isPlaying, 
   onTogglePlay, 
-  rainVolume = 0.5, 
+  rainVolume, 
   onRainVolumeChange, 
-  onToggleBg,
-  // 2. Thêm props mới
-  isLightsOn = true,
-  onToggleLights
+  onToggleBg, 
+  isLightsOn, 
+  onToggleLights,
+  // onOpenCommunity -> Không cần prop này nữa vì ta dùng navigate trực tiếp
 }) => {
-  return (
-    <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
-      <div className="flex items-center gap-6 px-8 py-4 
-                      bg-black/30 backdrop-blur-md 
-                      border border-white/10 rounded-full 
-                      shadow-[0_8px_32px_rgba(0,0,0,0.3)]
-                      transition-all duration-300 hover:bg-black/40">
+  const navigate = useNavigate();
+  
+  const handleRainChange = (e) => {
+    if (onRainVolumeChange) {
+      onRainVolumeChange(parseFloat(e.target.value));
+    }
+  };
 
-        {/* --- Music Controls --- */}
+  return (
+    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30">
+      <div className="flex items-center gap-4 px-6 py-3 bg-black/40 backdrop-blur-xl rounded-full border border-white/10 shadow-2xl">
+        
+        {/* --- 1. NÚT PLAY / PAUSE --- */}
         <button 
           onClick={onTogglePlay}
-          className="group relative flex items-center justify-center w-12 h-12 
-                     bg-white/10 rounded-full hover:bg-white/20 transition-all 
-                     active:scale-95 focus:outline-none focus:ring-2 focus:ring-white/30"
+          className="w-12 h-12 flex items-center justify-center bg-white text-black rounded-full hover:scale-105 hover:bg-gray-200 transition-all shadow-lg shadow-white/10"
         >
-          {isPlaying ? <Pause size={24} className="text-white fill-current" /> : <Play size={24} className="text-white fill-current ml-1" />}
+          {isPlaying ? (
+            <Pause size={24} fill="currentColor" />
+          ) : (
+            <Play size={24} fill="currentColor" className="ml-1" />
+          )}
         </button>
 
-        <div className="w-px h-8 bg-white/10"></div>
+        <div className="w-px h-8 bg-white/10 mx-2"></div>
 
-        {/* --- Rain Volume --- */}
-        <div className="flex items-center gap-3 group">
-          <CloudRain size={20} className="text-cyan-300" />
-          <div className="flex flex-col">
-            <label className="text-[10px] text-white/60 uppercase tracking-wider mb-1">Rain</label>
-            <input
-              type="range" min="0" max="1" step="0.01" value={rainVolume}
-              onChange={(e) => onRainVolumeChange(parseFloat(e.target.value))}
-              className="w-24 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-cyan-400 hover:accent-cyan-300"
-            />
+        {/* --- 2. SLIDER MƯA --- */}
+        <div className="relative group flex items-center justify-center">
+          <button 
+            className={`p-3 rounded-full transition-all duration-300 ${
+              rainVolume > 0 ? 'text-blue-400 bg-blue-500/10' : 'text-gray-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <CloudRain size={24} />
+          </button>
+          
+          {/* Container Slider: Hiện ra khi Hover vào icon Cloud */}
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 hidden group-hover:flex flex-col items-center justify-center w-12 h-32 bg-slate-900/90 backdrop-blur-md rounded-2xl border border-white/10 shadow-xl animate-fade-in-up">
+            <div className="relative w-full h-full flex items-center justify-center py-4">
+              {/* Input Range Xoay Dọc */}
+              <input 
+                type="range" 
+                min="0" 
+                max="1" 
+                step="0.01"
+                value={rainVolume || 0}
+                onChange={handleRainChange}
+                className="w-24 h-2 -rotate-90 bg-white/20 rounded-lg appearance-none cursor-pointer accent-blue-500 hover:accent-blue-400 origin-center"
+              />
+            </div>
+            {/* Hiển thị số % nhỏ ở dưới */}
+            <span className="text-[10px] text-gray-400 font-mono mb-2">
+              {Math.round((rainVolume || 0) * 100)}%
+            </span>
           </div>
         </div>
 
-        <div className="w-px h-8 bg-white/10"></div>
-
-        {/* --- Scene Switcher --- */}
-        <button onClick={onToggleBg} className="flex flex-col items-center gap-1 group opacity-70 hover:opacity-100 transition-opacity">
-          <div className="p-2 bg-white/5 rounded-lg group-hover:bg-white/10 transition-colors">
-            <ImageIcon size={20} className="text-orange-300" />
-          </div>
-          <span className="text-[10px] text-white/80">Scene</span>
+        {/* --- 3. CÁC NÚT CHỨC NĂNG KHÁC --- */}
+        {/* Đổi Cảnh */}
+        <button 
+          onClick={onToggleBg}
+          className="p-3 text-gray-300 hover:text-white hover:bg-white/10 rounded-full transition-all"
+          title="Đổi không gian"
+        >
+          <ImageIcon size={24} />
         </button>
 
-        <div className="w-px h-8 bg-white/10"></div>
-
-        {/* --- 3. LIGHT TOGGLE (Nút tắt đèn mới) --- */}
+        {/* Bật/Tắt đèn */}
         <button 
           onClick={onToggleLights}
-          className="flex flex-col items-center gap-1 group transition-opacity"
+          className={`p-3 rounded-full transition-all ${isLightsOn ? 'text-yellow-300 hover:bg-yellow-500/10' : 'text-gray-500 hover:text-gray-300'}`}
         >
-          <div className={`p-2 rounded-lg transition-colors ${isLightsOn ? 'bg-yellow-500/20' : 'bg-white/5'}`}>
-            {/* Nếu bật đèn: màu vàng, Tắt đèn: màu xám */}
-            <Lightbulb size={20} className={`transition-colors ${isLightsOn ? 'text-yellow-300' : 'text-gray-400'}`} />
-          </div>
-          <span className="text-[10px] text-white/80">{isLightsOn ? 'Lights On' : 'Sleep Mode'}</span>
+          {isLightsOn ? <Lightbulb size={24} /> : <LightbulbOff size={24} />}
+        </button>
+        
+        {/* NÚT CỘNG ĐỒNG (Sửa lại Logic ở đây) */}
+        <button 
+          onClick={() => navigate('/community')} // <--- SỬA: Chuyển hướng sang trang Community
+          className="p-3 text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 rounded-full transition-all"
+          title="Quảng trường Chill"
+        >
+          <MessageCircle size={24} />
         </button>
 
       </div>
